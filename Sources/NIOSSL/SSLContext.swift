@@ -24,6 +24,8 @@ import Musl
 import Glibc
 #elseif canImport(Android)
 import Android
+#elseif canImport(WASILibc)
+import WASILibc
 #else
 #error("unsupported os")
 #endif
@@ -691,6 +693,11 @@ extension NIOSSLContext {
     }
 
     private static func loadVerifyLocations(_ path: String, context: OpaquePointer, sendCANames: Bool) throws {
+        #if os(WASI)
+        // Browser consumers supply explicit in-memory roots. No filesystem
+        // certificate discovery is offered on WASI.
+        throw IOError(errnoCode: ENOTSUP, reason: "filesystem trust roots are unavailable on WASI")
+        #else
         let isDirectory: Bool
         switch FileSystemObject.pathType(path: path) {
         case .some(.directory):
@@ -726,6 +733,7 @@ extension NIOSSLContext {
                 try addCACertificateNameToList(context: context, certificate: cert)
             }
         }
+        #endif
     }
 
     private static func addRootCertificate(_ cert: NIOSSLCertificate, context: OpaquePointer) throws {
@@ -942,6 +950,7 @@ extension Optional where Wrapped == String {
     }
 }
 
+#if !os(WASI)
 internal class DirectoryContents: Sequence, IteratorProtocol {
 
     typealias Element = String
@@ -976,6 +985,7 @@ internal class DirectoryContents: Sequence, IteratorProtocol {
         closedir(dir)
     }
 }
+#endif
 
 // Used as part of the `_isRehashFormat` format to determine whether the filename is a hexadecimal
 // filename and whether its extension is a decimal digit.
