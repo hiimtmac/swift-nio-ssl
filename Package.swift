@@ -79,6 +79,7 @@ let package = Package(
         .target(
             name: "CNIOBoringSSL",
             cSettings: [
+                .define("OPENSSL_NO_SOCK", .when(platforms: [.wasi])),
                 .define("_GNU_SOURCE"),
                 .define("_POSIX_C_SOURCE", to: "200112L"),
                 .define("_DARWIN_C_SOURCE"),
@@ -91,6 +92,7 @@ let package = Package(
                 .define("NOCRYPT", .when(platforms: [.windows])),
             ],
             cxxSettings: [
+                .define("OPENSSL_NO_SOCK", .when(platforms: [.wasi])),
                 .define("_WINSOCKAPI_", .when(platforms: [.windows])),
                 .define("NOMINMAX", .when(platforms: [.windows])),
                 .define("NOCRYPT", .when(platforms: [.windows])),
@@ -110,7 +112,6 @@ let package = Package(
             dependencies: [
                 "CNIOBoringSSL",
                 "CNIOBoringSSLShims",
-                .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
                 .product(name: "NIOTLS", package: "swift-nio"),
